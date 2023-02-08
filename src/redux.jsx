@@ -1,9 +1,8 @@
 import React, {useContext, useEffect, useState} from 'react'
 
-export const store = {
-  state: {
-    user: {name: 'frank', age: 18}
-  },
+const store = {
+  state: undefined,
+  reducer: undefined,
   setState(newState) {
     store.state = newState
     store.listeners.map(fn => fn(store.state))
@@ -17,34 +16,53 @@ export const store = {
     }
   }
 }
-const reducer = (state, {type, payload}) => {
-  if (type === 'updateUser') {
-    return {
-      ...state,
-      user: {
-        ...state.user,
-        ...payload
-      }
-    }
-  } else {
-    return state
-  }
+
+export const createStore = (reducer, initState) => {
+  store.state = initState
+  store.reducer = reducer
+  return store
 }
-export const connect = (Component) => {
-  return (props) => {
-    console.log('propshmx',props)
-    const {state, setState} = useContext(appContext)
-    const [, update] = useState({})
-    useEffect(() => {
-      store.subscribe(() => {
-        update({})
-      })
-    }, [])
-    const dispatch = (action) => {
-      setState(reducer(state, action))
+
+const changed = (oldState, newState) => {
+  let changed = false
+  for (let key in oldState) {
+    if (oldState[key] !== newState[key]) {
+      changed = true
     }
-    return <Component {...props} dispatch={dispatch} state={state}/>
   }
+  return changed
+}
+
+export const connect = (selector, dispatchSelector) => (Component) => {
+  const Wrapper = (props) => {
+    const dispatch = (action) => {
+      setState(store.reducer(state, action))
+    }
+    const {state, setState} = useContext(appContext)
+
+    const data = selector ? selector(state) : {state}
+    const dispatchers = dispatchSelector ? dispatchSelector(dispatch) : {dispatch}
+
+    const [, update] = useState({})
+    useEffect(() => store.subscribe(() => {
+      const newData = selector ? selector(store.state) : {state: store.state}
+      if (changed(data, newData)) {
+        update({})
+      }
+    }), [selector])
+
+    return <Component {...props} {...data} {...dispatchers}/>
+  }
+  return Wrapper
 }
 
 export const appContext = React.createContext(null)
+
+//组件，因为它可以接受属性
+export const Provider = ({store, children}) => {
+  return (
+    <appContext.Provider value={store}>
+      {children}
+    </appContext.Provider>
+  )
+}
