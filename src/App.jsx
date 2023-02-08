@@ -17,7 +17,7 @@ const 大儿子 = () => {
 }
 const 二儿子 = () => {
   console.log('二儿子执行了 ' + Math.random())
-  return <section>二儿子<UserModifier/></section>
+  return <section>二儿子<UserModifier x="x111"/></section>
 }
 const 幺儿子 = () => {
   console.log('幺儿子执行了 ' + Math.random())
@@ -28,12 +28,13 @@ const User = connect(({state, dispatch}) => {
   return <div>User:{state.user.name}</div>
 })
 
-const UserModifier = connect(({dispatch, state, children}) => {
+const UserModifier = connect(({dispatch, state, children, x}) => {
   console.log('UserModifier执行了 ' + Math.random())
   const onChange = (e) => {
     dispatch({type: 'updateUser', payload: {name: e.target.value}})
   }
   return <div>
+    {x}
     {children}
     <input value={state.user.name}
       onChange={onChange}/>

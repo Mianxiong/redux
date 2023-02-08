@@ -32,6 +32,7 @@ const reducer = (state, {type, payload}) => {
 }
 export const connect = (Component) => {
   return (props) => {
+    console.log('propshmx',props)
     const {state, setState} = useContext(appContext)
     const [, update] = useState({})
     useEffect(() => {
